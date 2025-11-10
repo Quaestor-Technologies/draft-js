@@ -8,10 +8,10 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 const getRangeClientRects = require("./getRangeClientRects");
-
 export type FakeClientRect = {
   left: number,
   width: number,
@@ -20,10 +20,10 @@ export type FakeClientRect = {
   bottom: number,
   height: number,
 };
+
 /**
  * Like range.getBoundingClientRect() but normalizes for browser bugs.
  */
-
 function getRangeBoundingClientRect(range: Range): FakeClientRect {
   // "Return a DOMRect object describing the smallest rectangle that includes
   // the first rectangle in list and all of the remaining rectangles of which
@@ -34,7 +34,6 @@ function getRangeBoundingClientRect(range: Range): FakeClientRect {
   let right = 0;
   let bottom = 0;
   let left = 0;
-
   if (rects.length) {
     // If the first rectangle has 0 width, we use the second, this is needed
     // because Chrome renders a 0 width rectangle when the selection contains
@@ -54,10 +53,8 @@ function getRangeBoundingClientRect(range: Range): FakeClientRect {
         left
       } = rects[0]);
     }
-
     for (let ii = 1; ii < rects.length; ii++) {
       const rect = rects[ii];
-
       if (rect.height !== 0 && rect.width !== 0) {
         top = Math.min(top, rect.top);
         right = Math.max(right, rect.right);
@@ -66,7 +63,6 @@ function getRangeBoundingClientRect(range: Range): FakeClientRect {
       }
     }
   }
-
   return {
     top,
     right,
@@ -76,5 +72,4 @@ function getRangeBoundingClientRect(range: Range): FakeClientRect {
     height: bottom - top
   };
 }
-
 module.exports = getRangeBoundingClientRect;

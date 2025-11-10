@@ -8,33 +8,23 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type DraftEditor from "./DraftEditor.react";
-
 const DOMObserver = require("./DOMObserver");
-
 const DraftModifier = require("./DraftModifier");
-
 const DraftOffsetKey = require("./DraftOffsetKey");
-
 const EditorState = require("./EditorState");
-
 const Keys = require("fbjs/lib/Keys");
-
 const UserAgent = require("fbjs/lib/UserAgent");
-
 const editOnSelect = require("./editOnSelect");
-
 const getContentEditableContainer = require("./getContentEditableContainer");
-
 const getDraftEditorSelection = require("./getDraftEditorSelection");
-
 const getEntityKeyForSelection = require("./getEntityKeyForSelection");
-
 const nullthrows = require("fbjs/lib/nullthrows");
-
 const isIE = UserAgent.isBrowser('IE');
+
 /**
  * Millisecond delay to allow `compositionstart` to fire again upon
  * `compositionend`.
@@ -45,26 +35,23 @@ const isIE = UserAgent.isBrowser('IE');
  * leads to composed characters being resolved and re-render occurring
  * sooner than we want.
  */
-
 const RESOLVE_DELAY = 20;
+
 /**
  * A handful of variables used to track the current composition and its
  * resolution status. These exist at the module level because it is not
  * possible to have compositions occurring in multiple editors simultaneously,
  * and it simplifies state management with respect to the DraftEditor component.
  */
-
 let resolved = false;
 let stillComposing = false;
 let domObserver = null;
-
 function startDOMObserver(editor: DraftEditor) {
   if (!domObserver) {
     domObserver = new DOMObserver(getContentEditableContainer(editor));
     domObserver.start();
   }
 }
-
 const DraftEditorCompositionHandler = {
   /**
    * A `compositionstart` event has fired while we're still in composition
@@ -74,7 +61,6 @@ const DraftEditorCompositionHandler = {
     stillComposing = true;
     startDOMObserver(editor);
   },
-
   /**
    * Attempt to end the current composition session.
    *
@@ -98,9 +84,7 @@ const DraftEditorCompositionHandler = {
       }
     }, RESOLVE_DELAY);
   },
-
   onSelect: editOnSelect,
-
   /**
    * In Safari, keydown events may fire when committing compositions. If
    * the arrow keys are used to commit, prevent default so that the cursor
@@ -120,17 +104,13 @@ const DraftEditorCompositionHandler = {
         // composition and reinterpret the key press in edit mode.
         DraftEditorCompositionHandler.resolveComposition(editor);
       }
-
       editor._onKeyDown(e);
-
       return;
     }
-
     if (e.which === Keys.RIGHT || e.which === Keys.LEFT) {
       e.preventDefault();
     }
   },
-
   /**
    * Keypress events may fire when committing compositions. In Firefox,
    * pressing RETURN commits the composition and inserts extra newline
@@ -142,7 +122,6 @@ const DraftEditorCompositionHandler = {
       e.preventDefault();
     }
   },
-
   /**
    * Attempt to insert composed characters into the document.
    *
@@ -162,7 +141,6 @@ const DraftEditorCompositionHandler = {
     if (stillComposing) {
       return;
     }
-
     const lastEditorState = editor._latestEditorState;
     const mutations = nullthrows(domObserver).stopAndFlushMutations();
     domObserver = null;
@@ -171,11 +149,12 @@ const DraftEditorCompositionHandler = {
       inCompositionMode: false
     });
     editor.exitCurrentMode();
-
     if (!mutations.size) {
       editor.update(editorState);
       return;
-    } // TODO, check if Facebook still needs this flag or if it could be removed.
+    }
+
+    // TODO, check if Facebook still needs this flag or if it could be removed.
     // Since there can be multiple mutations providing a `composedChars` doesn't
     // apply well on this new model.
     // if (
@@ -191,7 +170,6 @@ const DraftEditorCompositionHandler = {
     // ) {
     //   return;
     // }
-
 
     let contentState = editorState.getCurrentContent();
     mutations.forEach((composedChars, offsetKey) => {
@@ -213,13 +191,15 @@ const DraftEditorCompositionHandler = {
       });
       const entityKey = getEntityKeyForSelection(contentState, replacementRange);
       const currentStyle = contentState.getBlockForKey(blockKey).getInlineStyleAt(start);
-      contentState = DraftModifier.replaceText(contentState, replacementRange, composedChars, currentStyle, entityKey); // We need to update the editorState so the leaf node ranges are properly
+      contentState = DraftModifier.replaceText(contentState, replacementRange, composedChars, currentStyle, entityKey);
+      // We need to update the editorState so the leaf node ranges are properly
       // updated and multiple mutations are correctly applied.
-
       editorState = EditorState.set(editorState, {
         currentContent: contentState
       });
-    }); // When we apply the text changes to the ContentState, the selection always
+    });
+
+    // When we apply the text changes to the ContentState, the selection always
     // goes to the end of the field, but it should just stay where it is
     // after compositionEnd. We also apply this to the last editor state, rather
     // than the new editor state in order to avoid problems that might come from
@@ -227,18 +207,17 @@ const DraftEditorCompositionHandler = {
     // the mutations above. If the ranges are off, for example, using mentions
     // in IME mode, then the selection will move the cursor to an invalid range.
     // See D23905960 for more context:
-
     const documentSelection = getDraftEditorSelection(lastEditorState, getContentEditableContainer(editor));
     const compositionEndSelectionState = documentSelection.selectionState;
-    editor.restoreEditorDOM(); // See:
+    editor.restoreEditorDOM();
+
+    // See:
     // - https://github.com/facebook/draft-js/issues/2093
     // - https://github.com/facebook/draft-js/pull/2094
     // Apply this fix only in IE for now. We can test it in
     // other browsers in the future to ensure no regressions
-
     const editorStateWithUpdatedSelection = isIE ? EditorState.forceSelection(editorState, compositionEndSelectionState) : EditorState.acceptSelection(editorState, compositionEndSelectionState);
     editor.update(EditorState.push(editorStateWithUpdatedSelection, contentState, 'insert-characters'));
   }
-
 };
 module.exports = DraftEditorCompositionHandler;

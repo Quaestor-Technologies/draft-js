@@ -8,15 +8,13 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type ContentState from "./ContentState";
 import type SelectionState from "./SelectionState";
-
 const applyEntityToContentBlock = require("./applyEntityToContentBlock");
-
 const Immutable = require("immutable");
-
 function applyEntityToContentState(contentState: ContentState, selectionState: SelectionState, entityKey: ?string): ContentState {
   const blockMap = contentState.getBlockMap();
   const startKey = selectionState.getStartKey();
@@ -34,5 +32,4 @@ function applyEntityToContentState(contentState: ContentState, selectionState: S
     selectionAfter: selectionState
   });
 }
-
 module.exports = applyEntityToContentState;

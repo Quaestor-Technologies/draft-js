@@ -8,6 +8,7 @@
  * @format
  * @oncall draft_js
  */
+
 import type ContentState from "./ContentState";
 import type { DraftBlockType } from "./DraftBlockType";
 import type { DraftEditorCommand } from "./DraftEditorCommand";

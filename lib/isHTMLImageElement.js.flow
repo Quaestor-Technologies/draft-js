@@ -8,14 +8,12 @@
  * @format
  * @oncall draft_js
  */
-const isElement = require("./isElement");
 
+const isElement = require("./isElement");
 function isHTMLImageElement(node: ?Node): boolean {
   if (!node || !node.ownerDocument) {
     return false;
   }
-
   return isElement(node) && node.nodeName === 'IMG';
 }
-
 module.exports = isHTMLImageElement;

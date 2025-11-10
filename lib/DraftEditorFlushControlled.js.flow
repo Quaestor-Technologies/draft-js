@@ -8,7 +8,7 @@
  * @format
  * @oncall draft_js
  */
-const ReactDOMComet = require("react-dom");
 
+const ReactDOMComet = require("react-dom");
 const flushControlled: void | ((fn: () => void) => void) = ReactDOMComet.unstable_flushControlled;
 module.exports = flushControlled;

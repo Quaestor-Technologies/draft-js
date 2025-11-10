@@ -8,18 +8,15 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type { DraftInlineStyle } from "./DraftInlineStyle";
-
 const CharacterMetadata = require("./CharacterMetadata");
-
 const Immutable = require("immutable");
-
 const {
   List
 } = Immutable;
-
 function createCharacterList(inlineStyles: Array<DraftInlineStyle>, entities: Array<?string>): List<CharacterMetadata> {
   const characterArray = inlineStyles.map((style, ii) => {
     const entity = entities[ii];
@@ -30,5 +27,4 @@ function createCharacterList(inlineStyles: Array<DraftInlineStyle>, entities: Ar
   });
   return List(characterArray);
 }
-
 module.exports = createCharacterList;

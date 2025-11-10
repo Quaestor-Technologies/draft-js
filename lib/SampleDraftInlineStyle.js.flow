@@ -8,12 +8,12 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 const {
   OrderedSet
 } = require("immutable");
-
 module.exports = {
   BOLD: (OrderedSet.of('BOLD'): OrderedSet<string>),
   BOLD_ITALIC: (OrderedSet.of('BOLD', 'ITALIC'): OrderedSet<string>),

@@ -8,54 +8,45 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type DraftEditor from "./DraftEditor.react";
 import type { DraftInlineStyle } from "./DraftInlineStyle";
-
 const DraftModifier = require("./DraftModifier");
-
 const EditorState = require("./EditorState");
-
 const UserAgent = require("fbjs/lib/UserAgent");
-
 const editOnInput = require("./editOnInput");
-
 const getEntityKeyForSelection = require("./getEntityKeyForSelection");
-
 const isEventHandled = require("./isEventHandled");
-
 const isSelectionAtLeafStart = require("./isSelectionAtLeafStart");
-
 const nullthrows = require("fbjs/lib/nullthrows");
+const setImmediate = require("fbjs/lib/setImmediate");
 
-const setImmediate = require("fbjs/lib/setImmediate"); // When nothing is focused, Firefox regards two characters, `'` and `/`, as
+// When nothing is focused, Firefox regards two characters, `'` and `/`, as
 // commands that should open and focus the "quickfind" search bar. This should
 // *never* happen while a contenteditable is focused, but as of v28, it
 // sometimes does, even when the keypress event target is the contenteditable.
 // This breaks the input. Special case these characters to ensure that when
 // they are typed, we prevent default on the event to make sure not to
 // trigger quickfind.
-
-
 const FF_QUICKFIND_CHAR = "'";
 const FF_QUICKFIND_LINK_CHAR = '/';
 const isFirefox = UserAgent.isBrowser('Firefox');
 const isIE = UserAgent.isBrowser('IE');
-
 function mustPreventDefaultForCharacter(character: string): boolean {
   return isFirefox && (character == FF_QUICKFIND_CHAR || character == FF_QUICKFIND_LINK_CHAR);
 }
+
 /**
  * Replace the current selection with the specified text string, with the
  * inline style and entity key applied to the newly inserted text.
  */
-
-
 function replaceText(editorState: EditorState, text: string, inlineStyle: DraftInlineStyle, entityKey: ?string, forceSelection: boolean): EditorState {
   const contentState = DraftModifier.replaceText(editorState.getCurrentContent(), editorState.getSelection(), text, inlineStyle, entityKey);
   return EditorState.push(editorState, contentState, 'insert-characters', forceSelection);
 }
+
 /**
  * When `onBeforeInput` executes, the browser is attempting to insert a
  * character into the editor. Apply this character data to the document,
@@ -65,8 +56,6 @@ function replaceText(editorState: EditorState, text: string, inlineStyle: DraftI
  * preserve spellcheck highlighting, which disappears or flashes if re-render
  * occurs on the relevant text nodes.
  */
-
-
 function editOnBeforeInput(editor: DraftEditor, e: SyntheticInputEvent<HTMLElement>): void {
   // We need this here in case this beforeInput fires before our
   // immediate below had a chance to fire in IE (say, the user is
@@ -77,48 +66,45 @@ function editOnBeforeInput(editor: DraftEditor, e: SyntheticInputEvent<HTMLEleme
       editor._pendingStateFromBeforeInput = undefined;
     }
   }
-
   const editorState = editor._latestEditorState;
-  const chars = e.data; // In some cases (ex: IE ideographic space insertion) no character data
-  // is provided. There's nothing to do when this happens.
+  const chars = e.data;
 
+  // In some cases (ex: IE ideographic space insertion) no character data
+  // is provided. There's nothing to do when this happens.
   if (!chars) {
     return;
-  } // Allow the top-level component to handle the insertion manually. This is
+  }
+
+  // Allow the top-level component to handle the insertion manually. This is
   // useful when triggering interesting behaviors for a character insertion,
   // Simple examples: replacing a raw text ':)' with a smile emoji or image
   // decorator, or setting a block to be a list item after typing '- ' at the
   // start of the block.
-
-
   if (editor.props.handleBeforeInput && isEventHandled(editor.props.handleBeforeInput(chars, editorState, e.timeStamp))) {
     e.preventDefault();
     return;
-  } // If selection is collapsed, conditionally allow native behavior. This
+  }
+
+  // If selection is collapsed, conditionally allow native behavior. This
   // reduces re-renders and preserves spellcheck highlighting. If the selection
   // is not collapsed, we will re-render.
-
-
   const selection = editorState.getSelection();
   const selectionStart = selection.getStartOffset();
   const anchorKey = selection.getAnchorKey();
-
   if (!selection.isCollapsed()) {
     e.preventDefault();
     editor.update(replaceText(editorState, chars, editorState.getCurrentInlineStyle(), getEntityKeyForSelection(editorState.getCurrentContent(), editorState.getSelection()), true));
     return;
   }
+  let newEditorState = replaceText(editorState, chars, editorState.getCurrentInlineStyle(), getEntityKeyForSelection(editorState.getCurrentContent(), editorState.getSelection()), false);
 
-  let newEditorState = replaceText(editorState, chars, editorState.getCurrentInlineStyle(), getEntityKeyForSelection(editorState.getCurrentContent(), editorState.getSelection()), false); // Bunch of different cases follow where we need to prevent native insertion.
-
+  // Bunch of different cases follow where we need to prevent native insertion.
   let mustPreventNative = false;
-
   if (!mustPreventNative) {
     // Browsers tend to insert text in weird places in the DOM when typing at
     // the start of a leaf, so we'll handle it ourselves.
     mustPreventNative = isSelectionAtLeafStart(editor._latestCommittedEditorState);
   }
-
   if (!mustPreventNative) {
     // Let's say we have a decorator that highlights hashtags. In many cases
     // we need to prevent native behavior and rerender ourselves --
@@ -165,23 +151,24 @@ function editOnBeforeInput(editor: DraftEditor, e: SyntheticInputEvent<HTMLEleme
       const newStart = newLeafSet.get('start');
       const newEnd = newLeafSet.get('end');
       const newDecoratorKey = newLeafSet.get('decoratorKey');
-      return (// Different decorators
-        oldLeafSet.get('decoratorKey') !== newDecoratorKey || // Different number of inline styles
-        oldLeafSet.get('leaves').size !== newLeafSet.get('leaves').size || // Different effective decorator position
-        adjustedStart !== newStart || adjustedEnd !== newEnd || // Decorator already existed and its length changed
+      return (
+        // Different decorators
+        oldLeafSet.get('decoratorKey') !== newDecoratorKey ||
+        // Different number of inline styles
+        oldLeafSet.get('leaves').size !== newLeafSet.get('leaves').size ||
+        // Different effective decorator position
+        adjustedStart !== newStart || adjustedEnd !== newEnd ||
+        // Decorator already existed and its length changed
         newDecoratorKey != null && newEnd - newStart !== oldEnd - oldStart
       );
     });
   }
-
   if (!mustPreventNative) {
     mustPreventNative = mustPreventDefaultForCharacter(chars);
   }
-
   if (!mustPreventNative) {
     mustPreventNative = nullthrows(newEditorState.getDirectionMap()).get(anchorKey) !== nullthrows(editorState.getDirectionMap()).get(anchorKey);
   }
-
   if (mustPreventNative) {
     e.preventDefault();
     newEditorState = EditorState.set(newEditorState, {
@@ -190,17 +177,18 @@ function editOnBeforeInput(editor: DraftEditor, e: SyntheticInputEvent<HTMLEleme
     editor.update(newEditorState);
     return;
   }
-
   newEditorState = EditorState.set(newEditorState, {
     nativelyRenderedContent: newEditorState.getCurrentContent()
-  }); // We have newEditorState, but we just don't want to call "editor.update"
+  });
+
+  // We have newEditorState, but we just don't want to call "editor.update"
   // just yet. So let's store this state updated with our change to be consumed
   // later, after the native event occurs and the browser inserts the char.
   // After that, when we rerender, the text we see in the DOM will already have
   // been inserted properly.
   //
-
-  editor._pendingStateFromBeforeInput = newEditorState; //
+  editor._pendingStateFromBeforeInput = newEditorState;
+  //
   // Part of the reason to do this is because browsers seem to change their
   // behaviour if you preventDefault(). For example, on macOS the browser seems
   // to believe it's no longer in a contenteditable and will change the
@@ -225,12 +213,10 @@ function editOnBeforeInput(editor: DraftEditor, e: SyntheticInputEvent<HTMLEleme
   // tasks from the web page get on the way (mimicking what would happen if the
   // browser fired both the beforeInput and input events). Calling our usual
   // input handler does the trick.
-
   if (isIE) {
     setImmediate(() => {
       editOnInput(editor, null);
     });
   }
 }
-
 module.exports = editOnBeforeInput;

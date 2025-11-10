@@ -8,14 +8,15 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type { DraftEntityMutability } from "./DraftEntityMutability";
 import type { DraftEntityType } from "./DraftEntityType";
+
 /**
  * A plain object representation of an EntityInstance.
  */
-
 export type RawDraftEntity = {
   type: DraftEntityType,
   mutability: DraftEntityMutability,

@@ -8,6 +8,7 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type { BlockNodeRecord } from "./BlockNodeRecord";

@@ -8,10 +8,10 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 var Promise = require("fbjs/lib/Promise");
-
 import type { BlockNodeRecord } from "./BlockNodeRecord";
 import type { DraftBlockRenderMap } from "./DraftBlockRenderMap";
 import type { DraftDragType } from "./DraftDragType";
@@ -94,7 +94,6 @@ export type DraftEditorProps = {
   ariaActiveDescendantID?: string,
   ariaAutoComplete?: string,
   ariaControls?: string,
-
   /**
    * aria-describedby attribute. should point to the id of a descriptive
    * element. The substring, "{{editor_id_placeholder}}" will be replaced with
@@ -107,7 +106,6 @@ export type DraftEditorProps = {
   ariaLabelledBy?: string,
   ariaMultiline?: boolean,
   ariaOwneeID?: string,
-
   /**
    * aria-required attribute. Boolean value that indicates that whether an
    * element is required to submit (true) or not. While HTML5 does have a
@@ -116,11 +114,11 @@ export type DraftEditorProps = {
    */
   ariaRequired?: string,
   webDriverTestID?: string,
-
   /**
    * Cancelable event handlers, handled from the top level down. A handler
    * that returns `handled` will be the last handler to execute for that event.
    */
+
   // Useful for managing special behavior for pressing the `Return` key. E.g.
   // removing the style from an empty list item.
   handleReturn?: (e: SyntheticKeyboardEvent<>, editorState: EditorState) => DraftHandleValue,
@@ -139,7 +137,6 @@ export type DraftEditorProps = {
   handleDroppedFiles?: (selection: SelectionState, files: Array<Blob>) => DraftHandleValue,
   // Handle other drops to prevent default text movement/insertion behaviour
   handleDrop?: (selection: SelectionState, dataTransfer: Object, isInternal: DraftDragType) => DraftHandleValue,
-
   /**
    * Deprecated event triggers.
    */

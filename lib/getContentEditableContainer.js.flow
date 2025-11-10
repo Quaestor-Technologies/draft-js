@@ -8,14 +8,12 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type DraftEditor from "./DraftEditor.react";
-
 const invariant = require("fbjs/lib/invariant");
-
 const isHTMLElement = require("./isHTMLElement");
-
 function getContentEditableContainer(editor: DraftEditor): HTMLElement {
   const editorNode = editor.editorContainer;
   invariant(editorNode, 'Missing editorNode');
@@ -23,5 +21,4 @@ function getContentEditableContainer(editor: DraftEditor): HTMLElement {
   const htmlElement = (editorNode.firstChild: any);
   return htmlElement;
 }
-
 module.exports = getContentEditableContainer;

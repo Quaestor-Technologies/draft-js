@@ -8,46 +8,36 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type { BlockMap } from "./BlockMap";
 import type { BlockNodeRecord } from "./BlockNodeRecord";
 import type ContentState from "./ContentState";
 import type { DraftInsertionType } from "./DraftInsertionType";
-
 const ContentBlockNode = require("./ContentBlockNode");
-
 const getNextDelimiterBlockKey = require("./getNextDelimiterBlockKey");
-
 const Immutable = require("immutable");
-
 const invariant = require("fbjs/lib/invariant");
-
 const {
   OrderedMap,
   List
 } = Immutable;
-
 const transformBlock = (key: ?string, blockMap: BlockMap, func: ((block: ContentBlockNode) => ContentBlockNode)): void => {
   if (!key) {
     return;
   }
-
   const block = blockMap.get(key);
-
   if (!block) {
     return;
   }
-
   blockMap.set(key, func(block));
 };
-
 const updateBlockMapLinks = (blockMap: BlockMap, originalBlockToBeMoved: BlockNodeRecord, originalTargetBlock: BlockNodeRecord, insertionMode: DraftInsertionType, isExperimentalTreeBlock: boolean): BlockMap => {
   if (!isExperimentalTreeBlock) {
     return blockMap;
-  } // possible values of 'insertionMode' are: 'after', 'before'
-
-
+  }
+  // possible values of 'insertionMode' are: 'after', 'before'
   const isInsertedAfterTarget = insertionMode === 'after';
   const originalBlockKey = originalBlockToBeMoved.getKey();
   const originalTargetKey = originalTargetBlock.getKey();
@@ -64,24 +54,29 @@ const updateBlockMapLinks = (blockMap: BlockMap, originalBlockToBeMoved: BlockNo
       return block.merge({
         children: parentChildrenList.delete(parentChildrenList.indexOf(originalBlockKey))
       });
-    }); // update old prev
+    });
 
+    // update old prev
     transformBlock(originalPrevSiblingKey, blocks, block => block.merge({
       nextSibling: originalNextSiblingKey
-    })); // update old next
+    }));
 
+    // update old next
     transformBlock(originalNextSiblingKey, blocks, block => block.merge({
       prevSibling: originalPrevSiblingKey
-    })); // update new next
+    }));
 
+    // update new next
     transformBlock(newNextSiblingKey, blocks, block => block.merge({
       prevSibling: originalBlockKey
-    })); // update new prev
+    }));
 
+    // update new prev
     transformBlock(newPrevSiblingKey, blocks, block => block.merge({
       nextSibling: originalBlockKey
-    })); // update new parent
+    }));
 
+    // update new parent
     transformBlock(newParentKey, blocks, block => {
       const newParentChildrenList = block.getChildKeys();
       const targetBlockIndex = newParentChildrenList.indexOf(originalTargetKey);
@@ -91,8 +86,9 @@ const updateBlockMapLinks = (blockMap: BlockMap, originalBlockToBeMoved: BlockNo
       return block.merge({
         children: List(newChildrenArray)
       });
-    }); // update block
+    });
 
+    // update block
     transformBlock(originalBlockKey, blocks, block => block.merge({
       nextSibling: newNextSiblingKey,
       prevSibling: newPrevSiblingKey,
@@ -100,7 +96,6 @@ const updateBlockMapLinks = (blockMap: BlockMap, originalBlockToBeMoved: BlockNo
     }));
   });
 };
-
 const moveBlockInContentState = (contentState: ContentState, blockToBeMoved: BlockNodeRecord, targetBlock: BlockNodeRecord, insertionMode: DraftInsertionType): ContentState => {
   invariant(insertionMode !== 'replace', 'Replacing blocks is not supported.');
   const targetKey = targetBlock.getKey();
@@ -110,7 +105,6 @@ const moveBlockInContentState = (contentState: ContentState, blockToBeMoved: Blo
   const isExperimentalTreeBlock = blockToBeMoved instanceof ContentBlockNode;
   let blocksToBeMoved: Array<BlockNodeRecord> = [blockToBeMoved];
   let blockMapWithoutBlocksToBeMoved = blockMap.delete(blockKey);
-
   if (isExperimentalTreeBlock) {
     blocksToBeMoved = [];
     blockMapWithoutBlocksToBeMoved = blockMap.withMutations(blocks => {
@@ -128,12 +122,10 @@ const moveBlockInContentState = (contentState: ContentState, blockToBeMoved: Blo
       });
     });
   }
-
   const blocksBefore = blockMapWithoutBlocksToBeMoved.toSeq().takeUntil(v => v === targetBlock);
   const blocksAfter = blockMapWithoutBlocksToBeMoved.toSeq().skipUntil(v => v === targetBlock).skip(1);
   const slicedBlocks = blocksToBeMoved.map(block => [block.getKey(), block]);
   let newBlocks = OrderedMap<string, BlockNodeRecord>();
-
   if (insertionMode === 'before') {
     const blockBefore = contentState.getBlockBefore(targetKey);
     invariant(!blockBefore || blockBefore.getKey() !== blockToBeMoved.getKey(), 'Block cannot be moved next to itself.');
@@ -143,7 +135,6 @@ const moveBlockInContentState = (contentState: ContentState, blockToBeMoved: Blo
     invariant(!blockAfter || blockAfter.getKey() !== blockKey, 'Block cannot be moved next to itself.');
     newBlocks = blocksBefore.concat([[targetKey, targetBlock], ...slicedBlocks], blocksAfter).toOrderedMap();
   }
-
   return contentState.merge({
     blockMap: updateBlockMapLinks(newBlocks, blockToBeMoved, targetBlock, insertionMode, isExperimentalTreeBlock),
     selectionBefore: contentState.getSelectionAfter(),
@@ -153,5 +144,4 @@ const moveBlockInContentState = (contentState: ContentState, blockToBeMoved: Blo
     })
   });
 };
-
 module.exports = moveBlockInContentState;

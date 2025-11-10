@@ -8,29 +8,24 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type { BlockNodeRecord } from "./BlockNodeRecord";
 import type CharacterMetadata from "./CharacterMetadata";
 import type ContentState from "./ContentState";
 import type { DraftDecoratorType } from "./DraftDecoratorType";
-
 const findRangesImmutable = require("./findRangesImmutable");
-
 const getOwnObjectValues = require("./getOwnObjectValues");
-
 const Immutable = require("immutable");
-
 const {
   List,
   Repeat,
   Record
 } = Immutable;
-
 const returnTrue = function () {
   return true;
 };
-
 const defaultLeafRange: {
   start: ?number,
   end: ?number,
@@ -67,10 +62,10 @@ const BlockTree = {
   /**
    * Generate a block tree for a given ContentBlock/decorator pair.
    */
-  generate(contentState: ContentState, block: BlockNodeRecord, decorator: ?DraftDecoratorType) // $FlowFixMe[value-as-type]
-  : List<DecoratorRange> {
+  generate(contentState: ContentState, block: BlockNodeRecord, decorator
+  // $FlowFixMe[value-as-type]
+  : ?DraftDecoratorType): List<DecoratorRange> {
     const textLength = block.getLength();
-
     if (!textLength) {
       return List.of(new DecoratorRange({
         start: 0,
@@ -82,7 +77,6 @@ const BlockTree = {
         }))
       }));
     }
-
     const leafSets = [];
     const decorations = decorator ? decorator.getDecorations(block, contentState) : List(Repeat(null, textLength));
     const chars = block.getCharacterList();
@@ -96,24 +90,24 @@ const BlockTree = {
     });
     return List(leafSets);
   },
-
   // $FlowFixMe[value-as-type]
   fromJS({
     leaves,
     ...other
   }: DecoratorRangeRawType): DecoratorRange {
-    return new DecoratorRange({ ...other,
+    return new DecoratorRange({
+      ...other,
       leaves: leaves != null ? List(Array.isArray(leaves) ? leaves : getOwnObjectValues(leaves)).map(leaf => LeafRange(leaf)) : null
     });
   }
-
 };
+
 /**
  * Generate LeafRange records for a given character list.
  */
-
-function generateLeaves(characters: List<CharacterMetadata>, offset: number) // $FlowFixMe[value-as-type]
-: List<LeafRange> {
+function generateLeaves(characters: List<CharacterMetadata>, offset
+// $FlowFixMe[value-as-type]
+: number): List<LeafRange> {
   const leaves = [];
   const inlineStyles = characters.map(c => c.getStyle()).toList();
   findRangesImmutable(inlineStyles, areEqual, returnTrue, (start, end) => {
@@ -124,9 +118,7 @@ function generateLeaves(characters: List<CharacterMetadata>, offset: number) // 
   });
   return List(leaves);
 }
-
 function areEqual(a: any, b: any): boolean {
   return a === b;
 }
-
 module.exports = BlockTree;

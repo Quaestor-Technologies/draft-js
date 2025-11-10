@@ -8,20 +8,15 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 const UserAgent = require("fbjs/lib/UserAgent");
-
 const findAncestorOffsetKey = require("./findAncestorOffsetKey");
-
 const getWindowForNode = require("./getWindowForNode");
-
 const Immutable = require("immutable");
-
 const invariant = require("fbjs/lib/invariant");
-
 const nullthrows = require("fbjs/lib/nullthrows");
-
 const {
   Map
 } = Immutable;
@@ -29,7 +24,9 @@ type MutationRecordT = MutationRecord | {
   type: 'characterData',
   target: Node,
   removedNodes?: void,
-}; // Heavily based on Prosemirror's DOMObserver https://github.com/ProseMirror/prosemirror-view/blob/master/src/domobserver.js
+};
+
+// Heavily based on Prosemirror's DOMObserver https://github.com/ProseMirror/prosemirror-view/blob/master/src/domobserver.js
 
 const DOM_OBSERVER_OPTIONS = {
   subtree: true,
@@ -37,10 +34,9 @@ const DOM_OBSERVER_OPTIONS = {
   childList: true,
   characterDataOldValue: false,
   attributes: false
-}; // IE11 has very broken mutation observers, so we also listen to DOMCharacterDataModified
-
+};
+// IE11 has very broken mutation observers, so we also listen to DOMCharacterDataModified
 const USE_CHAR_DATA = UserAgent.isBrowser('IE <= 11');
-
 class DOMObserver {
   observer: ?MutationObserver;
   container: HTMLElement;
@@ -50,13 +46,11 @@ class DOMObserver {
     type: string,
     ...
   }) => void;
-
   constructor(container: HTMLElement) {
     this.container = container;
     this.mutations = Map();
     const containerWindow = getWindowForNode(container);
     const MutationObserver = containerWindow.MutationObserver;
-
     if (MutationObserver && !USE_CHAR_DATA) {
       this.observer = new MutationObserver(mutations => this.registerMutations(mutations));
     } else {
@@ -69,7 +63,6 @@ class DOMObserver {
       };
     }
   }
-
   start(): void {
     if (this.observer) {
       this.observer.observe(this.container, DOM_OBSERVER_OPTIONS);
@@ -79,12 +72,10 @@ class DOMObserver {
       this.container.addEventListener('DOMCharacterDataModified', this.onCharData);
     }
   }
-
   stopAndFlushMutations(): Map<string, string> {
     const {
       observer
     } = this;
-
     if (observer) {
       this.registerMutations(observer.takeRecords());
       observer.disconnect();
@@ -93,25 +84,21 @@ class DOMObserver {
        * type is not defined by Flow's standard library */
       this.container.removeEventListener('DOMCharacterDataModified', this.onCharData);
     }
-
     const mutations = this.mutations;
     this.mutations = Map();
     return mutations;
   }
-
   registerMutations(mutations: Array<MutationRecord>): void {
     for (let i = 0; i < mutations.length; i++) {
       this.registerMutation(mutations[i]);
     }
   }
-
   getMutationTextContent(mutation: MutationRecordT): ?string {
     const {
       type,
       target,
       removedNodes
     } = mutation;
-
     if (type === 'characterData') {
       // When `textContent` is '', there is a race condition that makes
       // getting the offsetKey from the target not possible.
@@ -124,7 +111,6 @@ class DOMObserver {
         if (USE_CHAR_DATA) {
           return target.textContent.replace('\n', '');
         }
-
         return target.textContent;
       }
     } else if (type === 'childList') {
@@ -143,19 +129,14 @@ class DOMObserver {
         return target.textContent;
       }
     }
-
     return null;
   }
-
   registerMutation(mutation: MutationRecordT): void {
     const textContent = this.getMutationTextContent(mutation);
-
     if (textContent != null) {
       const offsetKey = nullthrows(findAncestorOffsetKey(mutation.target));
       this.mutations = this.mutations.set(offsetKey, textContent);
     }
   }
-
 }
-
 module.exports = DOMObserver;

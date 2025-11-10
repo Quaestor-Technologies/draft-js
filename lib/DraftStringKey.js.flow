@@ -8,16 +8,15 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 const DraftStringKey = {
   stringify(key: ?string): string {
     return '_' + String(key);
   },
-
   unstringify(key: string): string {
     return key.slice(1);
   }
-
 };
 module.exports = DraftStringKey;

@@ -7,4 +7,5 @@
  * @flow
  * @format
  */
+
 declare type Window = any;

@@ -8,30 +8,24 @@
  * @format
  * @oncall draft_js
  */
-const BLACK_LIST_PROPS = ['data-reactroot'];
 
+const BLACK_LIST_PROPS = ['data-reactroot'];
 const transformSnapshotProps = (node: any, blackList: Array<string> = BLACK_LIST_PROPS): any => {
   const stack = [node];
-
   while (stack.length) {
     const node = stack.pop();
-
     if (node.props) {
       if (node.props.className) {
         node.props.className = node.props.className.replace(/-/g, '__');
       }
-
       BLACK_LIST_PROPS.forEach(prop => delete node.props[prop]);
     }
-
     if (Array.isArray(node.children)) {
       stack.push(...node.children);
     }
   }
-
   return node;
 };
-
 const DraftTestHelper = {
   /**
    * This is meant to be used in combination with ReactTestRenderer

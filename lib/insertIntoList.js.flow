@@ -8,16 +8,16 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type { List } from "immutable";
+
 /**
  * Maintain persistence for target list when appending and prepending.
  */
-
 function insertIntoList<T>(targetListArg: List<T>, toInsert: List<T>, offset: number): List<T> {
   let targetList = targetListArg;
-
   if (offset === targetList.count()) {
     toInsert.forEach(c => {
       targetList = targetList.push(c);
@@ -31,8 +31,6 @@ function insertIntoList<T>(targetListArg: List<T>, toInsert: List<T>, offset: nu
     const tail = targetList.slice(offset);
     targetList = head.concat(toInsert, tail).toList();
   }
-
   return targetList;
 }
-
 module.exports = insertIntoList;

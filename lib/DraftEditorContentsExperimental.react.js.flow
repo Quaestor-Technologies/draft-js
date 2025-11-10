@@ -13,6 +13,7 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type { BlockNodeRecord } from "./BlockNodeRecord";
@@ -20,15 +21,10 @@ import type { DraftBlockRenderMap } from "./DraftBlockRenderMap";
 import type { DraftInlineStyle } from "./DraftInlineStyle";
 import type EditorState from "./EditorState";
 import type { BidiDirection } from "fbjs/lib/UnicodeBidiDirection";
-
 const DraftEditorBlockNode = require("./DraftEditorBlockNode.react");
-
 const DraftOffsetKey = require("./DraftOffsetKey");
-
 const nullthrows = require("fbjs/lib/nullthrows");
-
 const React = require("react");
-
 type Props = {
   blockRenderMap: DraftBlockRenderMap,
   blockRendererFn: (block: BlockNodeRecord) => ?Object,
@@ -40,6 +36,7 @@ type Props = {
   textDirectionality?: BidiDirection,
   ...
 };
+
 /**
  * `DraftEditorContents` is the container component for all block components
  * rendered for a `DraftEditor`. It is optimized to aggressively avoid
@@ -49,41 +46,37 @@ type Props = {
  * (for instance, ARIA props) must be allowed to update without affecting
  * the contents of the editor.
  */
-
 class DraftEditorContentsExperimental extends React.Component<Props> {
   shouldComponentUpdate(nextProps: Props): boolean {
     const prevEditorState = this.props.editorState;
     const nextEditorState = nextProps.editorState;
     const prevDirectionMap = prevEditorState.getDirectionMap();
-    const nextDirectionMap = nextEditorState.getDirectionMap(); // Text direction has changed for one or more blocks. We must re-render.
+    const nextDirectionMap = nextEditorState.getDirectionMap();
 
+    // Text direction has changed for one or more blocks. We must re-render.
     if (prevDirectionMap !== nextDirectionMap) {
       return true;
     }
-
     const didHaveFocus = prevEditorState.getSelection().getHasFocus();
     const nowHasFocus = nextEditorState.getSelection().getHasFocus();
-
     if (didHaveFocus !== nowHasFocus) {
       return true;
     }
-
     const nextNativeContent = nextEditorState.getNativelyRenderedContent();
     const wasComposing = prevEditorState.isInCompositionMode();
-    const nowComposing = nextEditorState.isInCompositionMode(); // If the state is unchanged or we're currently rendering a natively
-    // rendered state, there's nothing new to be done.
+    const nowComposing = nextEditorState.isInCompositionMode();
 
+    // If the state is unchanged or we're currently rendering a natively
+    // rendered state, there's nothing new to be done.
     if (prevEditorState === nextEditorState || nextNativeContent !== null && nextEditorState.getCurrentContent() === nextNativeContent || wasComposing && nowComposing) {
       return false;
     }
-
     const prevContent = prevEditorState.getCurrentContent();
     const nextContent = nextEditorState.getCurrentContent();
     const prevDecorator = prevEditorState.getDecorator();
     const nextDecorator = nextEditorState.getDecorator();
     return wasComposing !== nowComposing || prevContent !== nextContent || prevDecorator !== nextDecorator || nextEditorState.mustForceSelection();
   }
-
   render(): React.Node {
     const {
       blockRenderMap,
@@ -104,7 +97,6 @@ class DraftEditorContentsExperimental extends React.Component<Props> {
     const rootBlock = blocksAsArray[0];
     const processedBlocks = [];
     let nodeBlock: ?BlockNodeRecord = rootBlock;
-
     while (nodeBlock) {
       const blockKey = nodeBlock.getKey();
       const blockProps = {
@@ -136,22 +128,18 @@ class DraftEditorContentsExperimental extends React.Component<Props> {
       });
       const nextBlockKey = nodeBlock.getNextSiblingKey();
       nodeBlock = nextBlockKey ? content.getBlockForKey(nextBlockKey) : null;
-    } // Group contiguous runs of blocks that have the same wrapperTemplate
+    }
 
-
+    // Group contiguous runs of blocks that have the same wrapperTemplate
     const outputBlocks = [];
-
     for (let ii = 0; ii < processedBlocks.length;) {
       const info: any = processedBlocks[ii];
-
       if (info.wrapperTemplate) {
         const blocks = [];
-
         do {
           blocks.push(processedBlocks[ii].block);
           ii++;
         } while (ii < processedBlocks.length && processedBlocks[ii].wrapperTemplate === info.wrapperTemplate);
-
         const wrapperElement = React.cloneElement(info.wrapperTemplate, {
           key: info.key + '-wrap',
           'data-offset-key': info.offsetKey
@@ -162,10 +150,7 @@ class DraftEditorContentsExperimental extends React.Component<Props> {
         ii++;
       }
     }
-
     return <div data-contents="true">{outputBlocks}</div>;
   }
-
 }
-
 module.exports = DraftEditorContentsExperimental;

@@ -8,32 +8,22 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type { BlockNodeRecord } from "./BlockNodeRecord";
 import type { DraftInsertionType } from "./DraftInsertionType";
 import type SelectionState from "./SelectionState";
-
 const BlockMapBuilder = require("./BlockMapBuilder");
-
 const CharacterMetadata = require("./CharacterMetadata");
-
 const ContentBlock = require("./ContentBlock");
-
 const ContentBlockNode = require("./ContentBlockNode");
-
 const DraftModifier = require("./DraftModifier");
-
 const EditorState = require("./EditorState");
-
 const generateRandomKey = require("./generateRandomKey");
-
 const gkx = require("./gkx");
-
 const Immutable = require("immutable");
-
 const moveBlockInContentState = require("./moveBlockInContentState");
-
 const experimentalTreeDataSupport = gkx('draft_tree_data_support');
 const ContentBlockRecord = experimentalTreeDataSupport ? ContentBlockNode : ContentBlock;
 const {
@@ -62,16 +52,16 @@ const AtomicBlockUtils = {
       key: generateRandomKey(),
       type: 'unstyled'
     };
-
     if (experimentalTreeDataSupport) {
-      atomicBlockConfig = { ...atomicBlockConfig,
+      atomicBlockConfig = {
+        ...atomicBlockConfig,
         nextSibling: atomicDividerBlockConfig.key
       };
-      atomicDividerBlockConfig = { ...atomicDividerBlockConfig,
+      atomicDividerBlockConfig = {
+        ...atomicDividerBlockConfig,
         prevSibling: atomicBlockConfig.key
       };
     }
-
     const fragmentArray = [new ContentBlockRecord(atomicBlockConfig), new ContentBlockRecord(atomicDividerBlockConfig)];
     const fragment = BlockMapBuilder.createFromArray(fragmentArray);
     const withAtomicBlock = DraftModifier.replaceWithFragment(asAtomicBlock, insertionTarget, fragment);
@@ -81,12 +71,10 @@ const AtomicBlockUtils = {
     });
     return EditorState.push(editorState, newContent, 'insert-fragment');
   },
-
   moveAtomicBlock(editorState: EditorState, atomicBlock: BlockNodeRecord, targetRange: SelectionState, insertionMode?: DraftInsertionType): EditorState {
     const contentState = editorState.getCurrentContent();
     const selectionState = editorState.getSelection();
     let withMovedAtomicBlock;
-
     if (insertionMode === 'before' || insertionMode === 'after') {
       const targetBlock = contentState.getBlockForKey(insertionMode === 'before' ? targetRange.getStartKey() : targetRange.getEndKey());
       withMovedAtomicBlock = moveBlockInContentState(contentState, atomicBlock, targetBlock, insertionMode);
@@ -94,7 +82,6 @@ const AtomicBlockUtils = {
       const afterRemoval = DraftModifier.removeRange(contentState, targetRange, 'backward');
       const selectionAfterRemoval = afterRemoval.getSelectionAfter();
       const targetBlock = afterRemoval.getBlockForKey(selectionAfterRemoval.getFocusKey());
-
       if (selectionAfterRemoval.getStartOffset() === 0) {
         withMovedAtomicBlock = moveBlockInContentState(afterRemoval, atomicBlock, targetBlock, 'before');
       } else if (selectionAfterRemoval.getEndOffset() === targetBlock.getLength()) {
@@ -106,13 +93,11 @@ const AtomicBlockUtils = {
         withMovedAtomicBlock = moveBlockInContentState(afterSplit, atomicBlock, targetBlock, 'before');
       }
     }
-
     const newContent = withMovedAtomicBlock.merge({
       selectionBefore: selectionState,
       selectionAfter: withMovedAtomicBlock.getSelectionAfter().set('hasFocus', true)
     });
     return EditorState.push(editorState, newContent, 'move-block');
   }
-
 };
 module.exports = AtomicBlockUtils;

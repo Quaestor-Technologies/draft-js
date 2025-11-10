@@ -8,10 +8,12 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type { DraftRange } from "./DraftRange";
 import type { DraftRemovalDirection } from "./DraftRemovalDirection";
+
 /**
  * Identify the range to delete from a segmented entity.
  *
@@ -35,15 +37,10 @@ import type { DraftRemovalDirection } from "./DraftRemovalDirection";
  *       'John F. Kennedy' -> 'F. Kennedy'
  *            ^
  */
-
 const DraftEntitySegments = {
   getRemovalRange(selectionStart: number, selectionEnd: number, text: string, entityStart: number, direction: DraftRemovalDirection): DraftRange {
     let segments = text.split(' ');
-    segments = segments.map((
-    /*string*/
-    segment,
-    /*number*/
-    ii) => {
+    segments = segments.map((/*string*/segment, /*number*/ii) => {
       if (direction === 'forward') {
         if (ii > 0) {
           return ' ' + segment;
@@ -51,7 +48,6 @@ const DraftEntitySegments = {
       } else if (ii < segments.length - 1) {
         return segment + ' ';
       }
-
       return segment;
     });
     let segmentStart = entityStart;
@@ -59,11 +55,11 @@ const DraftEntitySegments = {
     let segment;
     let removalStart: any = null;
     let removalEnd: any = null;
-
     for (let jj = 0; jj < segments.length; jj++) {
       segment = segments[jj];
-      segmentEnd = segmentStart + segment.length; // Our selection overlaps this segment.
+      segmentEnd = segmentStart + segment.length;
 
+      // Our selection overlaps this segment.
       if (selectionStart < segmentEnd && segmentStart < selectionEnd) {
         if (removalStart !== null) {
           removalEnd = segmentEnd;
@@ -74,14 +70,11 @@ const DraftEntitySegments = {
       } else if (removalStart !== null) {
         break;
       }
-
       segmentStart = segmentEnd;
     }
-
     const entityEnd = entityStart + text.length;
     const atStart = removalStart === entityStart;
     const atEnd = removalEnd === entityEnd;
-
     if (!atStart && atEnd || atStart && !atEnd) {
       if (direction === 'forward') {
         if (removalEnd !== entityEnd) {
@@ -91,12 +84,10 @@ const DraftEntitySegments = {
         removalStart--;
       }
     }
-
     return {
       start: removalStart,
       end: removalEnd
     };
   }
-
 };
 module.exports = DraftEntitySegments;

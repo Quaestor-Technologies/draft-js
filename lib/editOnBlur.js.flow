@@ -8,17 +8,14 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type { SelectionObject } from "./DraftDOMTypes";
 import type DraftEditor from "./DraftEditor.react";
-
 const EditorState = require("./EditorState");
-
 const containsNode = require("fbjs/lib/containsNode");
-
 const getActiveElement = require("fbjs/lib/getActiveElement");
-
 function editOnBlur(editor: DraftEditor, e: SyntheticEvent<HTMLElement>): void {
   // In a contentEditable element, when you select a range and then click
   // another active element, this does trigger a `blur` event but will not
@@ -31,26 +28,20 @@ function editOnBlur(editor: DraftEditor, e: SyntheticEvent<HTMLElement>): void {
   const {
     ownerDocument
   } = e.currentTarget;
-
   if (!Boolean(editor.props.preserveSelectionOnBlur) && getActiveElement(ownerDocument) === ownerDocument.body) {
     const selection: SelectionObject = ownerDocument.defaultView.getSelection();
     const editorNode = editor.editor;
-
     if (selection.rangeCount === 1 && containsNode(editorNode, selection.anchorNode) && containsNode(editorNode, selection.focusNode)) {
       selection.removeAllRanges();
     }
   }
-
   const editorState = editor._latestEditorState;
   const currentSelection = editorState.getSelection();
-
   if (!currentSelection.getHasFocus()) {
     return;
   }
-
   const selection = currentSelection.set('hasFocus', false);
   editor.props.onBlur && editor.props.onBlur(e);
   editor.update(EditorState.acceptSelection(editorState, selection));
 }
-
 module.exports = editOnBlur;

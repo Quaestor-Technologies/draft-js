@@ -8,24 +8,17 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 const BlockMapBuilder = require("./BlockMapBuilder");
-
 const CharacterMetadata = require("./CharacterMetadata");
-
 const ContentBlock = require("./ContentBlock");
-
 const ContentState = require("./ContentState");
-
 const EditorState = require("./EditorState");
-
 const SampleDraftInlineStyle = require("./SampleDraftInlineStyle");
-
 const SelectionState = require("./SelectionState");
-
 const Immutable = require("immutable");
-
 const {
   BOLD,
   ITALIC
@@ -85,7 +78,6 @@ const contentState = new ContentState({
 }).createEntity('IMAGE', 'IMMUTABLE', null);
 let editorState = EditorState.createWithContent(contentState);
 editorState = EditorState.forceSelection(editorState, selectionState);
-
 const getSampleStateForTesting = (): {
   editorState: EditorState,
   contentState: ContentState,
@@ -97,5 +89,4 @@ const getSampleStateForTesting = (): {
     selectionState
   };
 };
-
 module.exports = getSampleStateForTesting;

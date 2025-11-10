@@ -8,6 +8,7 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 import type CharacterMetadata, { CharacterMetadataRawConfig } from "./CharacterMetadata";
@@ -32,9 +33,10 @@ export type BlockNodeConfig = {
   text?: string,
   type?: DraftBlockType,
   ...
-}; // https://github.com/facebook/draft-js/issues/1492
-// prettier-ignore
+};
 
+// https://github.com/facebook/draft-js/issues/1492
+// prettier-ignore
 export interface BlockNode {
   +findEntityRanges: (filterFn: (value: CharacterMetadata) => boolean, callback: (start: number, end: number) => void) => void,
   +findStyleRanges: (filterFn: (value: CharacterMetadata) => boolean, callback: (start: number, end: number) => void) => void,

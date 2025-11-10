@@ -8,15 +8,13 @@
  * @format
  * @oncall draft_js
  */
+
 'use strict';
 
 const DraftModifier = require("./DraftModifier");
-
 const EditorState = require("./EditorState");
-
 function keyCommandInsertNewline(editorState: EditorState): EditorState {
   const contentState = DraftModifier.splitBlock(editorState.getCurrentContent(), editorState.getSelection());
   return EditorState.push(editorState, contentState, 'split-block');
 }
-
 module.exports = keyCommandInsertNewline;
