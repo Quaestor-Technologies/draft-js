@@ -11,6 +11,23 @@ so that you can understand what actions will and will not be tolerated.
 We use GitHub to sync code to and from our internal repository. We'll use GitHub
 to track issues and feature requests, as well as accept pull requests.
 
+## Local Development
+
+The library toolchain uses Node.js 22 and Yarn 4.9.4 through Corepack, with
+dependencies installed in `node_modules`.
+
+```sh
+nvm use
+corepack enable
+yarn install --immutable
+yarn build
+yarn test --runInBand
+```
+
+Node.js 22 is a development requirement, not a new runtime requirement for
+applications consuming Draft.js. The separate `website/` toolchain is not covered
+by this setup.
+
 ## Pull Requests
 We actively welcome your pull requests.
 
