@@ -100,146 +100,77 @@ const contentBlockNodes = [
   }),
 ];
 
-const assertRemoveTextOperation = (
-  operation: (editorState: EditorState) => ContentState,
-  selection:
-    | $TEMPORARY$object<{...}>
-    | $TEMPORARY$object<{
-        anchorKey: $TEMPORARY$string<'D'>,
-        anchorOffset: number,
-        focusKey: $TEMPORARY$string<'D'>,
-        focusOffset: number,
-      }>
-    | $TEMPORARY$object<{
-        anchorKey: $TEMPORARY$string<'D'>,
-        anchorOffset: number,
-        focusKey: $TEMPORARY$string<'E'>,
-        focusOffset: number,
-      }>
-    | $TEMPORARY$object<{
-        anchorKey: $TEMPORARY$string<'E'>,
-        anchorOffset: number,
-        focusKey: $TEMPORARY$string<'E'>,
-        focusOffset: number,
-      }> = {},
-  content: $TEMPORARY$array<ContentBlockNode> = contentBlockNodes,
-) => {
-  const result = operation(
-    EditorState.forceSelection(
-      EditorState.createWithContent(
-        contentState.setBlockMap(BlockMapBuilder.createFromArray(content)),
+const createEditorState = (
+  anchorKey: string,
+  anchorOffset: number,
+  focusKey: string = anchorKey,
+  focusOffset: number = anchorOffset,
+): EditorState =>
+  EditorState.forceSelection(
+    EditorState.createWithContent(
+      contentState.setBlockMap(
+        BlockMapBuilder.createFromArray(contentBlockNodes),
       ),
-      SelectionState.createEmpty(content[0].key).merge(selection),
     ),
+    SelectionState.createEmpty(anchorKey).merge({
+      anchorKey,
+      anchorOffset,
+      focusKey,
+      focusOffset,
+    }),
   );
-  const expected = result.getBlockMap().toJS();
 
-  expect(expected).toMatchSnapshot();
-};
+const removeTextForward = (editorState: EditorState): ContentState =>
+  removeTextWithStrategy(
+    editorState,
+    strategyState => {
+      const selection = strategyState.getSelection();
+      const content = strategyState.getCurrentContent();
+      const key = selection.getAnchorKey();
+      const offset = selection.getAnchorOffset();
+      const charAhead = content.getBlockForKey(key).getText()[offset];
+      return moveSelectionForward(
+        strategyState,
+        charAhead ? UnicodeUtils.getUTF16Length(charAhead, 0) : 1,
+      );
+    },
+    'forward',
+  );
 
 test(`at end of a leaf block and sibling is another leaf block forward delete concatenates`, () => {
-  assertRemoveTextOperation(
-    editorState =>
-      removeTextWithStrategy(
-        editorState,
-        strategyState => {
-          const selection = strategyState.getSelection();
-          const content = strategyState.getCurrentContent();
-          const key = selection.getAnchorKey();
-          const offset = selection.getAnchorOffset();
-          const charAhead = content.getBlockForKey(key).getText()[offset];
-          return moveSelectionForward(
-            strategyState,
-            charAhead ? UnicodeUtils.getUTF16Length(charAhead, 0) : 1,
-          );
-        },
-        'forward',
-      ),
-    {
-      anchorKey: 'D',
-      anchorOffset: contentBlockNodes[3].getLength(),
-      focusKey: 'D',
-      focusOffset: contentBlockNodes[3].getLength(),
-    },
-  );
+  const editorState = createEditorState('D', contentBlockNodes[3].getLength());
+  const result = removeTextForward(editorState);
+
+  expect(result.getBlockForKey('D').getText()).toBe('DeltaElephant');
+  expect(result.getBlockMap().has('E')).toBe(false);
+  expect(
+    result
+      .getBlockForKey('C')
+      .getChildKeys()
+      .toArray(),
+  ).toEqual(['D']);
+  expect(result.getBlockForKey('D').getNextSiblingKey()).toBe(null);
 });
 
-test(`at end of a leaf block and sibling is not another leaf block forward delete is no-op`, () => {
-  // no next sibling
-  assertRemoveTextOperation(
-    editorState =>
-      removeTextWithStrategy(
-        editorState,
-        strategyState => {
-          const selection = strategyState.getSelection();
-          const content = strategyState.getCurrentContent();
-          const key = selection.getAnchorKey();
-          const offset = selection.getAnchorOffset();
-          const charAhead = content.getBlockForKey(key).getText()[offset];
-          return moveSelectionForward(
-            strategyState,
-            charAhead ? UnicodeUtils.getUTF16Length(charAhead, 0) : 1,
-          );
-        },
-        'forward',
-      ),
-    {
-      anchorKey: 'E',
-      anchorOffset: contentBlockNodes[4].getLength(),
-      focusKey: 'E',
-      focusOffset: contentBlockNodes[4].getLength(),
-    },
-  );
-  // next sibling is not a leaf
-  assertRemoveTextOperation(
-    editorState =>
-      removeTextWithStrategy(
-        editorState,
-        strategyState => {
-          const selection = strategyState.getSelection();
-          const content = strategyState.getCurrentContent();
-          const key = selection.getAnchorKey();
-          const offset = selection.getAnchorOffset();
-          const charAhead = content.getBlockForKey(key).getText()[offset];
-          return moveSelectionForward(
-            strategyState,
-            charAhead ? UnicodeUtils.getUTF16Length(charAhead, 0) : 1,
-          );
-        },
-        'forward',
-      ),
-    {
-      anchorKey: 'E',
-      anchorOffset: contentBlockNodes[4].getLength(),
-      focusKey: 'E',
-      focusOffset: contentBlockNodes[4].getLength(),
-    },
-  );
+test(`at end of a leaf block with no next sibling forward delete is no-op`, () => {
+  const editorState = createEditorState('E', contentBlockNodes[4].getLength());
+
+  expect(removeTextForward(editorState)).toBe(editorState.getCurrentContent());
+});
+
+test(`at end of a leaf block with a non-leaf next sibling forward delete is no-op`, () => {
+  const editorState = createEditorState('A', contentBlockNodes[0].getLength());
+
+  expect(removeTextForward(editorState)).toBe(editorState.getCurrentContent());
 });
 
 test(`across blocks with forward delete is a no-op`, () => {
-  assertRemoveTextOperation(
-    editorState =>
-      removeTextWithStrategy(
-        editorState,
-        strategyState => {
-          const selection = strategyState.getSelection();
-          const content = strategyState.getCurrentContent();
-          const key = selection.getAnchorKey();
-          const offset = selection.getAnchorOffset();
-          const charAhead = content.getBlockForKey(key).getText()[offset];
-          return moveSelectionForward(
-            strategyState,
-            charAhead ? UnicodeUtils.getUTF16Length(charAhead, 0) : 1,
-          );
-        },
-        'forward',
-      ),
-    {
-      anchorKey: 'D',
-      anchorOffset: contentBlockNodes[3].getLength(),
-      focusKey: 'E',
-      focusOffset: contentBlockNodes[4].getLength(),
-    },
+  const editorState = createEditorState(
+    'D',
+    contentBlockNodes[3].getLength(),
+    'E',
+    contentBlockNodes[4].getLength(),
   );
+
+  expect(removeTextForward(editorState)).toBe(editorState.getCurrentContent());
 });

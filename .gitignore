@@ -1,6 +1,7 @@
 static/
 build/
 node_modules
+.yarn/install-state.gz
 website/src/docs/
 npm-debug.log
 !website/static/

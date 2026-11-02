@@ -19,12 +19,11 @@
   "style": "dist/Draft.css",
   "repository": "facebook/draft-js",
   "license": "MIT",
+  "packageManager": "yarn@4.9.4",
   "scripts": {
     "prepublish": "npm run build",
-    "pretest": "node node_modules/fbjs-scripts/node/check-dev-engines.js package.json",
-    "build": "gulp",
+    "build": "gulp && node node_modules/fbjs-scripts/node/check-lib-requires.js lib",
     "dev": "gulp dev",
-    "postbuild": "node node_modules/fbjs-scripts/node/check-lib-requires.js lib",
     "lint": "eslint .",
     "lint-docs": "alex . && yarn format-docs:diff",
     "format": "eslint . --fix",
@@ -83,11 +82,15 @@
     "stats-webpack-plugin": "^0.7.0",
     "through2": "^4.0.2",
     "uglifyjs-webpack-plugin": "^2.2.0",
+    "webpack": "^4.47.0",
     "webpack-stream": "6.1.0"
   },
   "devEngines": {
-    "node": "14.x || 16.x",
-    "npm": "2.x || 3.x || 5.x || 6.x || 7.x || 8.x"
+    "runtime": {
+      "name": "node",
+      "version": "22.x",
+      "onFail": "error"
+    }
   },
   "jest": {
     "globals": {
